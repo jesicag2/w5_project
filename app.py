@@ -1,30 +1,11 @@
 from flask import Flask, jsonify, request
-# Flask - everything we need for running flask
-# jsonify - transform python objects to be displayed the browser or postman
-# request - HTTP requset handling
 from flask_sqlalchemy import SQLAlchemy
-# SQLAlchemy is the Object Relational Mapper - any functionality for converting python classes to SQL tables
 from sqlalchemy import select, delete
-# select is going to grab tables we want to query
-# delete is going to delete stuff from a specific table
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
-# DeclarativeBase - provides base model functionality to create SQL tables from Python Classes
-# All classes that become tables will inherit this class
-# Mapped - provides a column for our table while declaring the python type and an attribute for the class
-# python types are converted to SQL types like varchar, int, etc..
-# mapped_column - set our column and allow us to set any constraints for that column
-# Session - Session class for creating session objects to make changes to the database
 from flask_marshmallow import Marshmallow
-# Marshmallow - serializes and deserializes JSON objects so we can interact with them as python dictionaries
 from marshmallow import fields, ValidationError
-# fields allows us to create a data shape or type for incoming data to adhere to
-# ValidationError - a raised error when a object coming through a request does not adhere to the 
-# structure set by the marshmallow schema
 from typing import List
-# give us a type of empty list that we can use as placeholder for a collection of relationships
-# creating a one to many relationship, where One customer would have a collection or List of Orders
 import datetime 
-# give us access to the date type from datetime module
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+mysqlconnector://root:jesica123@localhost/e_commerce_project"
@@ -37,7 +18,7 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(app, model_class=Base)
 ma = Marshmallow(app)
 
-# python classes ===> sql tables
+# python classes into sql tables
 class Customer(Base):
     __tablename__ = "Customers"
     customer_id: Mapped[int] = mapped_column(primary_key=True)
@@ -74,6 +55,7 @@ with app.app_context():
     db.create_all()
 
 
+# Customer Schema
 class CustomerSchema(ma.Schema):
     customer_id = fields.Integer(required=False)
     name = fields.String(required=True)
@@ -94,11 +76,8 @@ class CustomersSchema(ma.Schema):
         fields = ("customer_id", "name", "email", "phone")
 
 # instantiate our CustomerSchemas
-# GET, POST, PUT, DELETE
-# Retrieve, Create, Update, Delete
 customer_schema = CustomerSchema() # Create, Update, Get One
 customers_schema = CustomersSchema(many=True) # Get all
-# No schema for delete because theres not transfer of data through an HTTP request
 
 # Product Schema
 class ProductSchema(ma.Schema):
@@ -112,9 +91,6 @@ class ProductSchema(ma.Schema):
 product_schema = ProductSchema()
 products_schema = ProductSchema(many=True)
 
-
-
-
 class OrderSchema(ma.Schema):
     order_id = fields.Integer(required=False)
     date = fields.Date(required=True)
@@ -122,12 +98,12 @@ class OrderSchema(ma.Schema):
 
     class Meta:
         fields = ("order_id", "date", "customer_id")
+
 order_schema = OrderSchema()
 orders_schema = OrderSchema(many=True)
 
 
-
-
+# Landing Page
 @app.route("/")
 def home():
     return "Welcome to our really nice ecommerce project. Its Niiiiiice!"
@@ -140,6 +116,7 @@ def get_cutomers():
 
     return customers_schema.jsonify(customers)
 
+# Customer routes
 @app.route("/customers", methods = ["POST"])
 def add_customer():
     try:
@@ -189,6 +166,7 @@ def delete_customer(id):
         return jsonify({"message": "Customer removed sucessfully"}), 200
 
 
+# Products routes
 @app.route("/products", methods=["GET"])
 def get_products():
     query = select(Product)
@@ -256,6 +234,7 @@ def delete_product(id):
 #     return products_schema.jsonify(products)
 
 
+# Order routes
 @app.route("/orders", methods=["GET"])
 def get_orders():
     query = select(Order)
